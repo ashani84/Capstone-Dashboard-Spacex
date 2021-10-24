@@ -38,10 +38,38 @@ app.layout = html.Div(children=[html.H1('SpaceX Launch Records Dashboard',
 
 # TASK 2:
 # Add a callback function for `site-dropdown` as input, `success-pie-chart` as output
+@app.callback(Output(component_id='success-pie-chart', component_property='figure'),
+              Input(component_id='site-dropdown', component_property='value'))
 
+def update_pie (entered_site):
+    filtered_df = spacex_df.groupby('Launch Site').size().reset_index(name='name size')
+    if entered_site == 'ALL':
+        pie_fig = px.pie(filtered_df, values='name size', names='Launch Site', 
+        title=f'Total Success Launches by Site')
+        return pie_fig
+    else:
+        filtered_dfs = spacex_df[spacex_df['Launch Site'] == entered_site].groupby('class').size().reset_index(name='class size')
+        pie_fig = px.pie(filtered_dfs, values='class size', names='class', 
+                  title=f'Total Success Launches for Site {entered_site}')
+        return pie_fig
 # TASK 4:
 # Add a callback function for `site-dropdown` and `payload-slider` as inputs, `success-payload-scatter-chart` as output
+@app.callback(Output(component_id='success-payload-scatter-chart', component_property='figure'),
+                [Input(component_id='site-dropdown', component_property='value'), 
+                Input(component_id='payload-slider', component_property='value')])
 
+def update_scatter (entered_site, slider_position):
+    low, high = slider_position
+    scat_df = spacex_df[spacex_df['Payload Mass (kg)'].between(low, high)]
+    if entered_site == 'ALL':
+        scat_fig = px.scatter(scat_df, x="Payload Mass (kg)", y="class", color="Booster Version Category",
+                title=f'Correlation between Payload and Success for All Sites') 
+        return scat_fig
+    else:
+        scat_dfs = scat_df[scat_df['Launch Site'] == entered_site]
+        scat_fig = px.scatter(scat_dfs, x="Payload Mass (kg)", y="class", color="Booster Version Category",
+                title=f'Correlation between Payload and Success for Site {entered_site}') 
+        return scat_fig
 
 # Run the app
 if __name__ == '__main__':
